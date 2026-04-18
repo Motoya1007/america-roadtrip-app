@@ -30,7 +30,7 @@ export default function HomePage() {
         </div>
 
         <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-semibold px-3 py-1.5 rounded-full">
-          <span>🎓</span> Graduation Trip 2025
+          <span>🎓</span> Graduation Trip 2026
         </div>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
