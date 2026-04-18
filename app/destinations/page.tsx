@@ -39,19 +39,8 @@ export default function DestinationsPage() {
 
   useEffect(() => {
     fetchDestinations();
-
-    const channel = getSupabase()
-      .channel('destinations-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'destinations' },
-        () => fetchDestinations()
-      )
-      .subscribe();
-
-    return () => {
-      getSupabase().removeChannel(channel);
-    };
+    const id = setInterval(fetchDestinations, 10_000);
+    return () => clearInterval(id);
   }, [fetchDestinations]);
 
   async function handleDelete(id: string) {

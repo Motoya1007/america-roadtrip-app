@@ -21,13 +21,17 @@ export default function MapPage() {
   const [destinations, setDestinations] = useState<Destination[] | null>(null);
 
   useEffect(() => {
-    getSupabase()
-      .from('destinations')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        setDestinations((data as Destination[]) ?? []);
-      });
+    async function fetchDestinations() {
+      const { data } = await getSupabase()
+        .from('destinations')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (data) setDestinations(data as Destination[]);
+    }
+
+    fetchDestinations();
+    const id = setInterval(fetchDestinations, 10_000);
+    return () => clearInterval(id);
   }, []);
 
   return (
