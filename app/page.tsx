@@ -29,6 +29,10 @@ export default function HomePage() {
           <span>🗽</span>
         </div>
 
+        <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+          <span>🎓</span> Graduation Trip 2025
+        </div>
+
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
           Coast to Coast
         </h1>
@@ -36,7 +40,7 @@ export default function HomePage() {
           San Francisco → New York
         </p>
         <p className="text-sm text-gray-400 max-w-sm">
-          4 friends. 1 route. Countless stops across America.
+          卒業を祝って、4人でアメリカ横断。
         </p>
       </section>
 
