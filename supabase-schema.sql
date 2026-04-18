@@ -9,7 +9,7 @@ create table if not exists destinations (
   note text,
   latitude double precision not null,
   longitude double precision not null,
-  type text not null default 'stop',
+  type text not null default 'destinations',
   created_at timestamptz not null default now()
 );
 
