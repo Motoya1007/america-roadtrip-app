@@ -19,6 +19,8 @@ export const initialDestinations: Destination[] = [
     priority: 'High',
     people: ['Alice', 'Bob', 'Carol'],
     note: 'South Rim in spring — book camping well in advance.',
+    lat: 36.0544,
+    lng: -112.1401,
   },
   {
     id: '2',
@@ -28,6 +30,8 @@ export const initialDestinations: Destination[] = [
     priority: 'High',
     people: ['Bob', 'Dave'],
     note: 'French Quarter, jazz, and the best beignets in the country.',
+    lat: 29.9511,
+    lng: -90.0715,
   },
   {
     id: '3',
@@ -37,6 +41,8 @@ export const initialDestinations: Destination[] = [
     priority: 'High',
     people: ['Alice', 'Carol', 'Eve'],
     note: 'Angels Landing hike is a must. Get a permit ahead of time.',
+    lat: 37.2982,
+    lng: -113.0263,
   },
   {
     id: '4',
@@ -46,6 +52,8 @@ export const initialDestinations: Destination[] = [
     priority: 'Medium',
     people: ['Dave', 'Eve'],
     note: 'Live music on Broadway every night. Hot chicken is legendary.',
+    lat: 36.1627,
+    lng: -86.7816,
   },
   {
     id: '5',
@@ -55,6 +63,8 @@ export const initialDestinations: Destination[] = [
     priority: 'Medium',
     people: ['Alice', 'Bob', 'Carol', 'Dave', 'Eve'],
     note: 'Baldwin Park original location. Order animal style.',
+    lat: 34.0852,
+    lng: -117.9601,
   },
   {
     id: '6',
@@ -64,6 +74,8 @@ export const initialDestinations: Destination[] = [
     priority: 'Medium',
     people: ['Carol', 'Dave'],
     note: 'Spray-painted Cadillacs buried nose-first in a field. Iconic.',
+    lat: 35.1872,
+    lng: -101.9873,
   },
   {
     id: '7',
@@ -73,6 +85,8 @@ export const initialDestinations: Destination[] = [
     priority: 'High',
     people: ['Alice', 'Eve'],
     note: 'Upper Canyon for photography. Tours sell out fast.',
+    lat: 36.8619,
+    lng: -111.3743,
   },
   {
     id: '8',
@@ -82,6 +96,8 @@ export const initialDestinations: Destination[] = [
     priority: 'Low',
     people: ['Bob'],
     note: 'Cadillac Mountain sunrise — first spot in the US to see the sun.',
+    lat: 44.3386,
+    lng: -68.2733,
   },
   {
     id: '9',
@@ -91,6 +107,8 @@ export const initialDestinations: Destination[] = [
     priority: 'Medium',
     people: ['Alice', 'Bob', 'Carol', 'Dave'],
     note: 'Brooklyn Bridge walk, Central Park, and a real NY pizza slice.',
+    lat: 40.7128,
+    lng: -74.006,
   },
   {
     id: '10',
@@ -100,5 +118,7 @@ export const initialDestinations: Destination[] = [
     priority: 'Low',
     people: ['Carol', 'Eve'],
     note: 'Most visited national park in the US. Stunning fall foliage.',
+    lat: 35.6532,
+    lng: -83.507,
   },
 ];

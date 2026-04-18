@@ -38,6 +38,10 @@ export default function DestinationsPage() {
     }
   }, []);
 
+  function handleDelete(id: string) {
+    setAllDestinations((prev) => prev.filter((d) => d.id !== id));
+  }
+
   const filtered = useMemo(() => {
     let list = allDestinations;
 
@@ -73,12 +77,18 @@ export default function DestinationsPage() {
             list
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link
             href="/add"
             className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             + Add place
+          </Link>
+          <Link
+            href="/map"
+            className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            🗺️ Map
           </Link>
           <Link
             href="/"
@@ -91,7 +101,6 @@ export default function DestinationsPage() {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        {/* Search */}
         <input
           type="text"
           value={search}
@@ -99,8 +108,6 @@ export default function DestinationsPage() {
           placeholder="Search by name or state…"
           className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
-        {/* Category filter */}
         <select
           value={categoryFilter}
           onChange={(e) =>
@@ -115,13 +122,9 @@ export default function DestinationsPage() {
             </option>
           ))}
         </select>
-
-        {/* Sort */}
         <select
           value={sortOrder}
-          onChange={(e) =>
-            setSortOrder(e.target.value as 'priority' | 'name')
-          }
+          onChange={(e) => setSortOrder(e.target.value as 'priority' | 'name')}
           className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="priority">Sort by priority</option>
@@ -138,7 +141,11 @@ export default function DestinationsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((destination) => (
-            <DestinationCard key={destination.id} destination={destination} />
+            <DestinationCard
+              key={destination.id}
+              destination={destination}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

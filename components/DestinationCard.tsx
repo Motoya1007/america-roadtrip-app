@@ -1,3 +1,5 @@
+'use client';
+
 import type { Destination, Priority } from '@/types';
 
 const priorityStyles: Record<Priority, string> = {
@@ -16,16 +18,17 @@ const categoryEmoji: Record<string, string> = {
 
 interface Props {
   destination: Destination;
+  onDelete: (id: string) => void;
 }
 
-export default function DestinationCard({ destination }: Props) {
-  const { name, state, category, priority, people, note } = destination;
+export default function DestinationCard({ destination, onDelete }: Props) {
+  const { id, name, state, category, priority, people, note } = destination;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 leading-tight">
             {categoryEmoji[category] ?? '📍'} {name}
           </h3>
@@ -46,9 +49,9 @@ export default function DestinationCard({ destination }: Props) {
       {/* Note */}
       {note && <p className="text-sm text-gray-600 leading-relaxed">{note}</p>}
 
-      {/* People */}
-      {people.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-auto pt-1 border-t border-gray-100">
+      {/* People + Delete */}
+      <div className="flex items-end justify-between gap-2 mt-auto pt-2 border-t border-gray-100">
+        <div className="flex flex-wrap gap-1">
           {people.map((person) => (
             <span
               key={person}
@@ -58,7 +61,14 @@ export default function DestinationCard({ destination }: Props) {
             </span>
           ))}
         </div>
-      )}
+        <button
+          onClick={() => onDelete(id)}
+          aria-label={`Delete ${name}`}
+          className="shrink-0 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

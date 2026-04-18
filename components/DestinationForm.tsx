@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, PRIORITIES } from '@/data/destinations';
+import { US_STATES } from '@/data/states';
 import type { Destination, Category, Priority } from '@/types';
 
 const STORAGE_KEY = 'roadtrip_added_destinations';
@@ -16,17 +17,22 @@ function loadSaved(): Destination[] {
   }
 }
 
+const EMPTY_FORM = {
+  name: '',
+  state: US_STATES[0],
+  category: CATEGORIES[0] as Category,
+  priority: 'Medium' as Priority,
+  people: '',
+  note: '',
+  lat: '',
+  lng: '',
+};
+
 export default function DestinationForm() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    state: '',
-    category: CATEGORIES[0] as Category,
-    priority: 'Medium' as Priority,
-    people: '',
-    note: '',
-  });
+  const [submittedName, setSubmittedName] = useState('');
+  const [form, setForm] = useState(EMPTY_FORM);
 
   function handleChange(
     e: React.ChangeEvent<
@@ -39,10 +45,13 @@ export default function DestinationForm() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const parsedLat = form.lat !== '' ? parseFloat(form.lat) : undefined;
+    const parsedLng = form.lng !== '' ? parseFloat(form.lng) : undefined;
+
     const newDestination: Destination = {
       id: `user-${Date.now()}`,
       name: form.name.trim(),
-      state: form.state.trim(),
+      state: form.state,
       category: form.category,
       priority: form.priority,
       people: form.people
@@ -50,6 +59,8 @@ export default function DestinationForm() {
         .map((p) => p.trim())
         .filter(Boolean),
       note: form.note.trim(),
+      lat: parsedLat != null && !isNaN(parsedLat) ? parsedLat : undefined,
+      lng: parsedLng != null && !isNaN(parsedLng) ? parsedLng : undefined,
     };
 
     const existing = loadSaved();
@@ -58,6 +69,7 @@ export default function DestinationForm() {
       JSON.stringify([...existing, newDestination])
     );
 
+    setSubmittedName(form.name.trim());
     setSubmitted(true);
   }
 
@@ -69,7 +81,7 @@ export default function DestinationForm() {
           Destination added!
         </h2>
         <p className="text-gray-500">
-          <span className="font-medium text-gray-700">{form.name}</span> was
+          <span className="font-medium text-gray-700">{submittedName}</span> was
           saved to your trip list.
         </p>
         <div className="flex gap-3 mt-2">
@@ -77,19 +89,18 @@ export default function DestinationForm() {
             onClick={() => router.push('/destinations')}
             className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
           >
-            View all destinations
+            View list
+          </button>
+          <button
+            onClick={() => router.push('/map')}
+            className="px-5 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            View map
           </button>
           <button
             onClick={() => {
               setSubmitted(false);
-              setForm({
-                name: '',
-                state: '',
-                category: CATEGORIES[0],
-                priority: 'Medium',
-                people: '',
-                note: '',
-              });
+              setForm(EMPTY_FORM);
             }}
             className="px-5 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
           >
@@ -104,10 +115,7 @@ export default function DestinationForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       {/* Place name */}
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="name"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="name" className="text-sm font-medium text-gray-700">
           Place name <span className="text-red-500">*</span>
         </label>
         <input
@@ -122,27 +130,28 @@ export default function DestinationForm() {
         />
       </div>
 
-      {/* State */}
+      {/* State dropdown */}
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="state"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="state" className="text-sm font-medium text-gray-700">
           State <span className="text-red-500">*</span>
         </label>
-        <input
+        <select
           id="state"
           name="state"
-          type="text"
           required
           value={form.state}
           onChange={handleChange}
-          placeholder="e.g. Wyoming"
-          className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {US_STATES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Category & Priority side by side */}
+      {/* Category & Priority */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <label
@@ -191,10 +200,7 @@ export default function DestinationForm() {
 
       {/* People */}
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="people"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="people" className="text-sm font-medium text-gray-700">
           Who wants to go?
         </label>
         <input
@@ -210,10 +216,7 @@ export default function DestinationForm() {
 
       {/* Note */}
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="note"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="note" className="text-sm font-medium text-gray-700">
           Note
         </label>
         <textarea
@@ -225,6 +228,48 @@ export default function DestinationForm() {
           placeholder="Any tips, links, or things to keep in mind…"
           className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
+      </div>
+
+      {/* Lat / Lng */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-gray-700">
+          Coordinates{' '}
+          <span className="font-normal text-gray-400">(optional — for map pin)</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            id="lat"
+            name="lat"
+            type="number"
+            step="any"
+            value={form.lat}
+            onChange={handleChange}
+            placeholder="Latitude e.g. 36.05"
+            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            id="lng"
+            name="lng"
+            type="number"
+            step="any"
+            value={form.lng}
+            onChange={handleChange}
+            placeholder="Longitude e.g. -112.14"
+            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <p className="text-xs text-gray-400">
+          You can look up coordinates on{' '}
+          <a
+            href="https://www.google.com/maps"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Google Maps
+          </a>{' '}
+          (right-click a location → copy coordinates).
+        </p>
       </div>
 
       <button

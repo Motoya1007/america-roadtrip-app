@@ -4,12 +4,12 @@ const HIGHLIGHTS = [
   { emoji: '📍', label: '10 sample destinations' },
   { emoji: '🔍', label: 'Filter, sort & search' },
   { emoji: '➕', label: 'Add your own spots' },
+  { emoji: '🗺️', label: 'Interactive map view' },
 ];
 
 export default function HomePage() {
   return (
     <main className="flex flex-col items-center justify-center flex-1 px-6 py-20 text-center">
-      {/* Hero */}
       <div className="max-w-lg w-full flex flex-col items-center gap-6">
         <div className="text-6xl">🚗</div>
         <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
@@ -17,7 +17,7 @@ export default function HomePage() {
         </h1>
         <p className="text-lg text-gray-500 leading-relaxed">
           Plan your cross-country US road trip with friends. Add places you
-          want to visit, set priorities, and see who&apos;s in.
+          want to visit, set priorities, and see them all on a map.
         </p>
 
         {/* Feature chips */}
@@ -33,8 +33,8 @@ export default function HomePage() {
           ))}
         </ul>
 
-        {/* CTA */}
-        <div className="flex gap-3 mt-4">
+        {/* CTAs */}
+        <div className="flex flex-wrap justify-center gap-3 mt-4">
           <Link
             href="/destinations"
             className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
@@ -42,10 +42,16 @@ export default function HomePage() {
             View destinations
           </Link>
           <Link
+            href="/map"
+            className="px-6 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          >
+            🗺️ View map
+          </Link>
+          <Link
             href="/add"
             className="px-6 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
           >
-            Add a place
+            + Add a place
           </Link>
         </div>
       </div>

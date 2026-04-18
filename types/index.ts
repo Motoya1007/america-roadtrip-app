@@ -15,4 +15,6 @@ export interface Destination {
   priority: Priority;
   people: string[];
   note: string;
+  lat?: number;
+  lng?: number;
 }
