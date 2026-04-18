@@ -40,7 +40,7 @@ export default function MapView({ destinations }: Props) {
       for (const d of destinations) {
         if (d.lat == null || d.lng == null) continue;
 
-        // DivIcon avoids webpack asset-path issues with default marker images
+        // divIcon avoids webpack asset-path issues with default marker images
         const icon = L.divIcon({
           html: '<span style="font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))">📍</span>',
           className: '',
@@ -49,16 +49,25 @@ export default function MapView({ destinations }: Props) {
           popupAnchor: [0, -28],
         });
 
+        const travelersHtml =
+          d.travelers.length > 0
+            ? `<div style="font-size:12px;margin-top:4px;color:#374151">
+                <span style="color:#9ca3af">Going:</span>
+                <b>${d.travelers.join(', ')}</b>
+               </div>`
+            : '';
+
         const popup = `
-          <div style="min-width:155px;font-family:system-ui,sans-serif;line-height:1.5">
+          <div style="min-width:160px;font-family:system-ui,sans-serif;line-height:1.5">
             <div style="font-weight:700;font-size:14px">${d.name}</div>
             <div style="color:#6b7280;font-size:12px">${d.state} · ${d.category}</div>
             <div style="font-size:12px">Priority: <b>${d.priority}</b></div>
-            ${d.note ? `<div style="font-size:12px;color:#374151;margin-top:3px;font-style:italic">${d.note}</div>` : ''}
+            ${travelersHtml}
+            ${d.note ? `<div style="font-size:12px;color:#374151;margin-top:4px;font-style:italic">${d.note}</div>` : ''}
           </div>`;
 
         L.marker([d.lat, d.lng], { icon }).addTo(map).bindPopup(popup, {
-          maxWidth: 240,
+          maxWidth: 260,
         });
 
         points.push([d.lat, d.lng]);

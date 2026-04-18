@@ -17,7 +17,10 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 function loadSaved(): Destination[] {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    // Migrate entries saved before the people→travelers rename
+    return raw.map((d) => ({ ...d, travelers: d.travelers ?? d.people ?? [] }));
   } catch {
     return [];
   }
@@ -40,6 +43,21 @@ export default function DestinationsPage() {
 
   function handleDelete(id: string) {
     setAllDestinations((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  function handleToggleTraveler(id: string, traveler: string) {
+    setAllDestinations((prev) =>
+      prev.map((d) => {
+        if (d.id !== id) return d;
+        const already = d.travelers.includes(traveler);
+        return {
+          ...d,
+          travelers: already
+            ? d.travelers.filter((t) => t !== traveler)
+            : [...d.travelers, traveler],
+        };
+      })
+    );
   }
 
   const filtered = useMemo(() => {
@@ -145,6 +163,7 @@ export default function DestinationsPage() {
               key={destination.id}
               destination={destination}
               onDelete={handleDelete}
+              onToggleTraveler={handleToggleTraveler}
             />
           ))}
         </div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, PRIORITIES } from '@/data/destinations';
 import { US_STATES } from '@/data/states';
+import { geocode } from '@/lib/geocode';
 import type { Destination, Category, Priority } from '@/types';
 
 const STORAGE_KEY = 'roadtrip_added_destinations';
@@ -22,31 +23,42 @@ const EMPTY_FORM = {
   state: US_STATES[0],
   category: CATEGORIES[0] as Category,
   priority: 'Medium' as Priority,
-  people: '',
   note: '',
-  lat: '',
-  lng: '',
 };
 
 export default function DestinationForm() {
   const router = useRouter();
-  const [submitted, setSubmitted] = useState(false);
-  const [submittedName, setSubmittedName] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [submittedName, setSubmittedName] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
+    setGeocodeError(null); // clear error on any change
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setGeocodeError(null);
+    setGeocoding(true);
 
-    const parsedLat = form.lat !== '' ? parseFloat(form.lat) : undefined;
-    const parsedLng = form.lng !== '' ? parseFloat(form.lng) : undefined;
+    const coords = await geocode(form.name.trim(), form.state);
+
+    setGeocoding(false);
+
+    if (!coords) {
+      setGeocodeError(
+        `Could not find "${form.name.trim()}, ${form.state}". ` +
+          'Try a more specific place name (e.g. "Grand Canyon South Rim" instead of "Grand Canyon").'
+      );
+      return;
+    }
 
     const newDestination: Destination = {
       id: `user-${Date.now()}`,
@@ -54,13 +66,10 @@ export default function DestinationForm() {
       state: form.state,
       category: form.category,
       priority: form.priority,
-      people: form.people
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean),
+      travelers: [],
       note: form.note.trim(),
-      lat: parsedLat != null && !isNaN(parsedLat) ? parsedLat : undefined,
-      lng: parsedLng != null && !isNaN(parsedLng) ? parsedLng : undefined,
+      lat: coords.lat,
+      lng: coords.lng,
     };
 
     const existing = loadSaved();
@@ -81,10 +90,13 @@ export default function DestinationForm() {
           Destination added!
         </h2>
         <p className="text-gray-500">
-          <span className="font-medium text-gray-700">{submittedName}</span> was
-          saved to your trip list.
+          <span className="font-medium text-gray-700">{submittedName}</span> is
+          on the trip list.
         </p>
-        <div className="flex gap-3 mt-2">
+        <p className="text-xs text-gray-400">
+          Mark who&apos;s interested from the destinations page.
+        </p>
+        <div className="flex gap-3 mt-2 flex-wrap justify-center">
           <button
             onClick={() => router.push('/destinations')}
             className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -198,22 +210,6 @@ export default function DestinationForm() {
         </div>
       </div>
 
-      {/* People */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="people" className="text-sm font-medium text-gray-700">
-          Who wants to go?
-        </label>
-        <input
-          id="people"
-          name="people"
-          type="text"
-          value={form.people}
-          onChange={handleChange}
-          placeholder="Alice, Bob, Carol (comma-separated)"
-          className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
       {/* Note */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="note" className="text-sm font-medium text-gray-700">
@@ -225,58 +221,24 @@ export default function DestinationForm() {
           rows={3}
           value={form.note}
           onChange={handleChange}
-          placeholder="Any tips, links, or things to keep in mind…"
+          placeholder="Tips, must-sees, things to book in advance…"
           className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
 
-      {/* Lat / Lng */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700">
-          Coordinates{' '}
-          <span className="font-normal text-gray-400">(optional — for map pin)</span>
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            id="lat"
-            name="lat"
-            type="number"
-            step="any"
-            value={form.lat}
-            onChange={handleChange}
-            placeholder="Latitude e.g. 36.05"
-            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            id="lng"
-            name="lng"
-            type="number"
-            step="any"
-            value={form.lng}
-            onChange={handleChange}
-            placeholder="Longitude e.g. -112.14"
-            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      {/* Geocoding error */}
+      {geocodeError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {geocodeError}
         </div>
-        <p className="text-xs text-gray-400">
-          You can look up coordinates on{' '}
-          <a
-            href="https://www.google.com/maps"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-gray-600"
-          >
-            Google Maps
-          </a>{' '}
-          (right-click a location → copy coordinates).
-        </p>
-      </div>
+      )}
 
       <button
         type="submit"
-        className="mt-1 w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+        disabled={geocoding}
+        className="mt-1 w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Add to trip
+        {geocoding ? 'Finding location…' : 'Add to trip'}
       </button>
     </form>
   );

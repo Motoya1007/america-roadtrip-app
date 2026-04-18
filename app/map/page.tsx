@@ -21,7 +21,10 @@ const MapView = dynamic(() => import('@/components/MapView'), {
 
 function loadSaved(): Destination[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    // Migrate entries saved before the people→travelers rename
+    return raw.map((d) => ({ ...d, travelers: d.travelers ?? d.people ?? [] }));
   } catch {
     return [];
   }

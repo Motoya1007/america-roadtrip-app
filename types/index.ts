@@ -13,7 +13,7 @@ export interface Destination {
   state: string;
   category: Category;
   priority: Priority;
-  people: string[];
+  travelers: string[];
   note: string;
   lat?: number;
   lng?: number;

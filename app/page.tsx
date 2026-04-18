@@ -1,40 +1,47 @@
 import Link from 'next/link';
-
-const HIGHLIGHTS = [
-  { emoji: '📍', label: '10 sample destinations' },
-  { emoji: '🔍', label: 'Filter, sort & search' },
-  { emoji: '➕', label: 'Add your own spots' },
-  { emoji: '🗺️', label: 'Interactive map view' },
-];
+import { TRAVELERS, TRAVELER_COLORS } from '@/data/travelers';
+import type { Traveler } from '@/data/travelers';
 
 export default function HomePage() {
   return (
     <main className="flex flex-col items-center justify-center flex-1 px-6 py-20 text-center">
       <div className="max-w-lg w-full flex flex-col items-center gap-6">
+        {/* Icon + title */}
         <div className="text-6xl">🚗</div>
         <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
           RoadTrip Planner Lite
         </h1>
-        <p className="text-lg text-gray-500 leading-relaxed">
-          Plan your cross-country US road trip with friends. Add places you
-          want to visit, set priorities, and see them all on a map.
+
+        {/* Route subtitle */}
+        <div className="flex items-center gap-2 text-xl font-semibold text-gray-600">
+          <span>San Francisco</span>
+          <span className="text-gray-300">→</span>
+          <span>New York</span>
+        </div>
+
+        <p className="text-base text-gray-500 leading-relaxed -mt-2">
+          Track every stop, mark priorities, and see it all on a map.
         </p>
 
-        {/* Feature chips */}
-        <ul className="flex flex-wrap justify-center gap-3 mt-2">
-          {HIGHLIGHTS.map(({ emoji, label }) => (
-            <li
-              key={label}
-              className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-600 shadow-sm"
-            >
-              <span>{emoji}</span>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        {/* Travelers */}
+        <div className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 flex flex-col items-center gap-3 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Travelers
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {TRAVELERS.map((name) => (
+              <span
+                key={name}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold ${TRAVELER_COLORS[name as Traveler]}`}
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* CTAs */}
-        <div className="flex flex-wrap justify-center gap-3 mt-4">
+        <div className="flex flex-wrap justify-center gap-3 mt-2">
           <Link
             href="/destinations"
             className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
