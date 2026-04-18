@@ -7,6 +7,8 @@ export type Category =
   | 'Scenic Spot'
   | 'Attraction';
 
+export type DestinationType = 'start' | 'goal' | 'stop';
+
 export interface Destination {
   id: string;
   name: string;
@@ -14,7 +16,9 @@ export interface Destination {
   category: Category;
   priority: Priority;
   travelers: string[];
-  note: string;
-  lat?: number;
-  lng?: number;
+  note: string | null;
+  latitude: number;
+  longitude: number;
+  type: DestinationType;
+  created_at?: string;
 }

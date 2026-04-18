@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { initialDestinations, CATEGORIES } from '@/data/destinations';
+import { CATEGORIES } from '@/data/destinations';
+import { getSupabase } from '@/lib/supabase/client';
 import DestinationCard from '@/components/DestinationCard';
 import type { Destination, Category, Priority } from '@/types';
-
-const STORAGE_KEY = 'roadtrip_added_destinations';
 
 const PRIORITY_ORDER: Record<Priority, number> = {
   High: 0,
@@ -14,54 +13,74 @@ const PRIORITY_ORDER: Record<Priority, number> = {
   Low: 2,
 };
 
-function loadSaved(): Destination[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw: any[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-    // Migrate entries saved before the people→travelers rename
-    return raw.map((d) => ({ ...d, travelers: d.travelers ?? d.people ?? [] }));
-  } catch {
-    return [];
-  }
-}
-
 export default function DestinationsPage() {
-  const [allDestinations, setAllDestinations] =
-    useState<Destination[]>(initialDestinations);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'All'>('All');
   const [sortOrder, setSortOrder] = useState<'priority' | 'name'>('priority');
 
-  // Merge localStorage additions on mount
-  useEffect(() => {
-    const saved = loadSaved();
-    if (saved.length > 0) {
-      setAllDestinations([...initialDestinations, ...saved]);
+  const fetchDestinations = useCallback(async () => {
+    const { data, error: fetchError } = await getSupabase()
+      .from('destinations')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (fetchError) {
+      setError('Failed to load destinations.');
+      setLoading(false);
+      return;
     }
+
+    setDestinations(data as Destination[]);
+    setLoading(false);
   }, []);
 
-  function handleDelete(id: string) {
-    setAllDestinations((prev) => prev.filter((d) => d.id !== id));
+  useEffect(() => {
+    fetchDestinations();
+
+    const channel = getSupabase()
+      .channel('destinations-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'destinations' },
+        () => fetchDestinations()
+      )
+      .subscribe();
+
+    return () => {
+      getSupabase().removeChannel(channel);
+    };
+  }, [fetchDestinations]);
+
+  async function handleDelete(id: string) {
+    setDestinations((prev) => prev.filter((d) => d.id !== id));
+    await getSupabase().from('destinations').delete().eq('id', id);
   }
 
-  function handleToggleTraveler(id: string, traveler: string) {
-    setAllDestinations((prev) =>
-      prev.map((d) => {
-        if (d.id !== id) return d;
-        const already = d.travelers.includes(traveler);
-        return {
-          ...d,
-          travelers: already
-            ? d.travelers.filter((t) => t !== traveler)
-            : [...d.travelers, traveler],
-        };
-      })
+  async function handleToggleTraveler(id: string, traveler: string) {
+    const dest = destinations.find((d) => d.id === id);
+    if (!dest) return;
+
+    const already = dest.travelers.includes(traveler);
+    const updated = already
+      ? dest.travelers.filter((t) => t !== traveler)
+      : [...dest.travelers, traveler];
+
+    // Optimistic update
+    setDestinations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, travelers: updated } : d))
     );
+
+    await getSupabase()
+      .from('destinations')
+      .update({ travelers: updated })
+      .eq('id', id);
   }
 
   const filtered = useMemo(() => {
-    let list = allDestinations;
+    let list = destinations;
 
     if (categoryFilter !== 'All') {
       list = list.filter((d) => d.category === categoryFilter);
@@ -82,7 +101,7 @@ export default function DestinationsPage() {
       }
       return a.name.localeCompare(b.name);
     });
-  }, [allDestinations, categoryFilter, search, sortOrder]);
+  }, [destinations, categoryFilter, search, sortOrder]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 w-full">
@@ -91,8 +110,9 @@ export default function DestinationsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Destinations</h1>
           <p className="text-gray-500 mt-1 text-sm">
-            {filtered.length} place{filtered.length !== 1 ? 's' : ''} on your
-            list
+            {loading
+              ? 'Loading…'
+              : `${filtered.length} place${filtered.length !== 1 ? 's' : ''} on your list`}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -116,6 +136,12 @@ export default function DestinationsPage() {
           </Link>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -151,7 +177,12 @@ export default function DestinationsPage() {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-gray-400">
+          <p className="text-4xl mb-3">⏳</p>
+          <p className="text-sm">Loading destinations…</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <p className="text-4xl mb-3">🗺️</p>
           <p className="text-sm">No destinations match your filters.</p>

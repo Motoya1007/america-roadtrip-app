@@ -4,10 +4,8 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { initialDestinations } from '@/data/destinations';
+import { getSupabase } from '@/lib/supabase/client';
 import type { Destination } from '@/types';
-
-const STORAGE_KEY = 'roadtrip_added_destinations';
 
 // Leaflet manipulates the DOM directly — disable SSR to avoid hydration errors
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -19,60 +17,74 @@ const MapView = dynamic(() => import('@/components/MapView'), {
   ),
 });
 
-function loadSaved(): Destination[] {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw: any[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-    // Migrate entries saved before the people→travelers rename
-    return raw.map((d) => ({ ...d, travelers: d.travelers ?? d.people ?? [] }));
-  } catch {
-    return [];
-  }
-}
-
 export default function MapPage() {
-  // null = not yet loaded (avoids rendering MapView before localStorage is read)
   const [destinations, setDestinations] = useState<Destination[] | null>(null);
 
   useEffect(() => {
-    const saved = loadSaved();
-    setDestinations(
-      saved.length > 0
-        ? [...initialDestinations, ...saved]
-        : initialDestinations
-    );
+    getSupabase()
+      .from('destinations')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        setDestinations((data as Destination[]) ?? []);
+      });
   }, []);
-
-  const mapped = destinations?.filter(
-    (d) => d.lat != null && d.lng != null
-  );
 
   return (
     <div className="flex flex-col h-screen">
       {/* Top bar */}
-      <header className="shrink-0 flex items-center justify-between px-4 sm:px-6 h-14 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <span className="text-xl">🗺️</span>
-          <h1 className="text-base font-semibold text-gray-900">Trip Map</h1>
-          {mapped != null && (
-            <span className="text-xs text-gray-400">
-              {mapped.length} pin{mapped.length !== 1 ? 's' : ''}
-            </span>
-          )}
+      <header className="shrink-0 bg-white border-b border-gray-200">
+        {/* Title row */}
+        <div className="flex items-center justify-between px-4 sm:px-6 h-14">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🗺️</span>
+            <h1 className="text-base font-semibold text-gray-900">Trip Map</h1>
+            {destinations != null && (
+              <span className="text-xs text-gray-400">
+                {destinations.length} pin{destinations.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href="/add"
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              + Add place
+            </Link>
+            <Link
+              href="/destinations"
+              className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              List view
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/add"
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            + Add place
-          </Link>
-          <Link
-            href="/destinations"
-            className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-          >
-            List view
-          </Link>
+
+        {/* Route legend */}
+        <div className="flex items-center gap-4 px-4 sm:px-6 pb-2.5 text-xs font-medium">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-600 text-white text-[9px] font-bold shrink-0">
+              S
+            </span>
+            <span className="text-gray-600">
+              Start: <span className="font-semibold text-gray-800">San Francisco</span>
+            </span>
+          </div>
+          <span className="text-gray-300">→</span>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white text-[9px] font-bold shrink-0">
+              G
+            </span>
+            <span className="text-gray-600">
+              Goal: <span className="font-semibold text-gray-800">New York</span>
+            </span>
+          </div>
+          <span className="text-gray-300 mx-1">·</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-base leading-none">📍</span>
+            <span className="text-gray-500">Destination</span>
+          </div>
         </div>
       </header>
 
@@ -82,19 +94,16 @@ export default function MapPage() {
           <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
             Loading…
           </div>
-        ) : mapped!.length === 0 ? (
+        ) : destinations.length === 0 ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-gray-400">
             <span className="text-4xl">📍</span>
-            <p className="text-sm">No destinations with coordinates yet.</p>
-            <Link
-              href="/add"
-              className="text-blue-600 text-sm hover:underline"
-            >
-              Add a place with lat / lng →
+            <p className="text-sm">No destinations yet.</p>
+            <Link href="/add" className="text-blue-600 text-sm hover:underline">
+              Add a place →
             </Link>
           </div>
         ) : (
-          <MapView destinations={mapped!} />
+          <MapView destinations={destinations} />
         )}
       </main>
     </div>

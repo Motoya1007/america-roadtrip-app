@@ -5,18 +5,8 @@ import { useRouter } from 'next/navigation';
 import { CATEGORIES, PRIORITIES } from '@/data/destinations';
 import { US_STATES } from '@/data/states';
 import { geocode } from '@/lib/geocode';
-import type { Destination, Category, Priority } from '@/types';
-
-const STORAGE_KEY = 'roadtrip_added_destinations';
-
-function loadSaved(): Destination[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-  } catch {
-    return [];
-  }
-}
+import { getSupabase } from '@/lib/supabase/client';
+import type { Category, Priority } from '@/types';
 
 const EMPTY_FORM = {
   name: '',
@@ -30,7 +20,7 @@ export default function DestinationForm() {
   const router = useRouter();
   const [form, setForm] = useState(EMPTY_FORM);
   const [geocoding, setGeocoding] = useState(false);
-  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [submittedName, setSubmittedName] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -39,13 +29,13 @@ export default function DestinationForm() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
-    setGeocodeError(null); // clear error on any change
+    setError(null);
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setGeocodeError(null);
+    setError(null);
     setGeocoding(true);
 
     const coords = await geocode(form.name.trim(), form.state);
@@ -53,30 +43,29 @@ export default function DestinationForm() {
     setGeocoding(false);
 
     if (!coords) {
-      setGeocodeError(
+      setError(
         `Could not find "${form.name.trim()}, ${form.state}". ` +
           'Try a more specific place name (e.g. "Grand Canyon South Rim" instead of "Grand Canyon").'
       );
       return;
     }
 
-    const newDestination: Destination = {
-      id: `user-${Date.now()}`,
+    const { error: insertError } = await getSupabase().from('destinations').insert({
       name: form.name.trim(),
       state: form.state,
       category: form.category,
       priority: form.priority,
       travelers: [],
-      note: form.note.trim(),
-      lat: coords.lat,
-      lng: coords.lng,
-    };
+      note: form.note.trim() || null,
+      latitude: coords.lat,
+      longitude: coords.lng,
+      type: 'stop',
+    });
 
-    const existing = loadSaved();
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify([...existing, newDestination])
-    );
+    if (insertError) {
+      setError('Failed to save destination. Please try again.');
+      return;
+    }
 
     setSubmittedName(form.name.trim());
     setSubmitted(true);
@@ -226,10 +215,10 @@ export default function DestinationForm() {
         />
       </div>
 
-      {/* Geocoding error */}
-      {geocodeError && (
+      {/* Error */}
+      {error && (
         <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {geocodeError}
+          {error}
         </div>
       )}
 
