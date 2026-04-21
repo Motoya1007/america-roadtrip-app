@@ -14,7 +14,7 @@ export interface Destination {
   name: string;
   state: string;
   category: Category;
-  priority: Priority;
+  priority?: Priority; // stored in DB but derived from travelers in the UI
   travelers: string[];
   note: string | null;
   latitude: number;

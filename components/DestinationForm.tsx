@@ -2,17 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES, PRIORITIES } from '@/data/destinations';
+import { CATEGORIES } from '@/data/destinations';
 import { US_STATES } from '@/data/states';
 import { geocode } from '@/lib/geocode';
 import { getSupabase } from '@/lib/supabase/client';
-import type { Category, Priority } from '@/types';
+import type { Category } from '@/types';
 
 const EMPTY_FORM = {
   name: '',
   state: US_STATES[0],
   category: CATEGORIES[0] as Category,
-  priority: 'Medium' as Priority,
   note: '',
 };
 
@@ -54,7 +53,7 @@ export default function DestinationForm() {
       name: form.name.trim(),
       state: form.state,
       category: form.category,
-      priority: form.priority,
+      priority: 'Low', // initial value — overridden by traveler count in the UI
       travelers: [],
       note: form.note.trim() || null,
       latitude: coords.lat,
@@ -152,51 +151,24 @@ export default function DestinationForm() {
         </select>
       </div>
 
-      {/* Category & Priority */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="category"
-            className="text-sm font-medium text-gray-700"
-          >
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="priority"
-            className="text-sm font-medium text-gray-700"
-          >
-            Priority
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={form.priority}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Category */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="category" className="text-sm font-medium text-gray-700">
+          Category
+        </label>
+        <select
+          id="category"
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Note */}

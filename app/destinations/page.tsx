@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { CATEGORIES } from '@/data/destinations';
 import { getSupabase } from '@/lib/supabase/client';
+import { getPriorityFromTravelers } from '@/lib/priority';
 import DestinationCard from '@/components/DestinationCard';
 import type { Destination, Category, Priority } from '@/types';
 
@@ -48,6 +49,16 @@ export default function DestinationsPage() {
     await getSupabase().from('destinations').delete().eq('id', id);
   }
 
+  async function handleUpdateNote(id: string, note: string) {
+    setDestinations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, note: note || null } : d))
+    );
+    await getSupabase()
+      .from('destinations')
+      .update({ note: note || null })
+      .eq('id', id);
+  }
+
   async function handleToggleTraveler(id: string, traveler: string) {
     const dest = destinations.find((d) => d.id === id);
     if (!dest) return;
@@ -86,7 +97,7 @@ export default function DestinationsPage() {
 
     return [...list].sort((a, b) => {
       if (sortOrder === 'priority') {
-        return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+        return PRIORITY_ORDER[getPriorityFromTravelers(a.travelers)] - PRIORITY_ORDER[getPriorityFromTravelers(b.travelers)];
       }
       return a.name.localeCompare(b.name);
     });
@@ -184,6 +195,7 @@ export default function DestinationsPage() {
               destination={destination}
               onDelete={handleDelete}
               onToggleTraveler={handleToggleTraveler}
+              onUpdateNote={handleUpdateNote}
             />
           ))}
         </div>

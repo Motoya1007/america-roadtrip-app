@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import type { Destination, Priority } from '@/types';
 import { TRAVELERS, TRAVELER_COLORS } from '@/data/travelers';
+import { getPriorityFromTravelers } from '@/lib/priority';
 import type { Traveler } from '@/data/travelers';
 
 const priorityStyles: Record<Priority, string> = {
@@ -22,15 +24,31 @@ interface Props {
   destination: Destination;
   onDelete: (id: string) => void;
   onToggleTraveler: (destinationId: string, traveler: string) => void;
+  onUpdateNote: (id: string, note: string) => void;
 }
 
 export default function DestinationCard({
   destination,
   onDelete,
   onToggleTraveler,
+  onUpdateNote,
 }: Props) {
-  const { id, name, state, category, priority, note } = destination;
+  const { id, name, state, category, note } = destination;
   const travelers: string[] = destination.travelers ?? [];
+  const priority = getPriorityFromTravelers(travelers);
+
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteValue, setNoteValue] = useState(note ?? '');
+
+  function handleSaveNote() {
+    onUpdateNote(id, noteValue.trim());
+    setEditingNote(false);
+  }
+
+  function handleCancelNote() {
+    setNoteValue(note ?? '');
+    setEditingNote(false);
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
@@ -55,7 +73,49 @@ export default function DestinationCard({
       </span>
 
       {/* Note */}
-      {note && <p className="text-sm text-gray-600 leading-relaxed">{note}</p>}
+      {editingNote ? (
+        <div className="flex flex-col gap-2">
+          <textarea
+            rows={3}
+            value={noteValue}
+            onChange={(e) => setNoteValue(e.target.value)}
+            className="border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            placeholder="Add a note…"
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveNote}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancelNote}
+              className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-start justify-between gap-2 min-h-[1.5rem]">
+          {note ? (
+            <p className="text-sm text-gray-600 leading-relaxed flex-1">{note}</p>
+          ) : (
+            <p className="text-sm text-gray-300 italic flex-1">No note yet</p>
+          )}
+          <button
+            onClick={() => {
+              setNoteValue(note ?? '');
+              setEditingNote(true);
+            }}
+            className="shrink-0 text-xs text-gray-400 hover:text-blue-500 transition-colors"
+          >
+            Edit note
+          </button>
+        </div>
+      )}
 
       {/* Traveler toggles */}
       <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-100">
